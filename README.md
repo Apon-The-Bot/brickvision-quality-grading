@@ -7,7 +7,7 @@
 [![OpenCV](https://img.shields.io/badge/OpenCV-Computer%20Vision-green.svg)](https://opencv.org/)
 [![Author](https://img.shields.io/badge/Author-Md.%20Amanullah%20Sheikh%20Apon-emerald.svg)](https://github.com/Apon-The-Bot)
 
-An industrial computer vision and machine learning system for non-destructive civil engineering inspection. **BrickVision AI** grades clay bricks (Grade 1 to Grade 4) using multi-spectral color modeling, GLCM texture descriptors, and an Out-of-Distribution (OOD) Mahalanobis distance filter to reject non-brick samples (e.g., sand, gravel, or background noise).
+An industrial computer vision and machine learning system for non-destructive civil engineering inspection... **BrickVision AI** grades clay bricks (Grade 1 to Grade 4) using multi-spectral color modeling, GLCM texture descriptors, and an Out-of-Distribution (OOD) Mahalanobis distance filter to reject non-brick samples (e.g., sand, gravel, or background noise).
 
 > **Author:** Md. Amanullah Sheikh Apon  
 > **Contact:** [mdamanullahsheikhapon@gmail.com](mailto:mdamanullahsheikhapon@gmail.com)  
