@@ -1,0 +1,208 @@
+clc; clear; close all;
+
+% Load Image Dataset
+imageFolder = 'D:\New Brick\ProcessBrickFrontViewImage'; % Change path accordingly
+categories = {'G1','G2','G3','G4'};     % Adjust category names as per folder structure
+
+% Create Image Datastore
+imageDs = imageDatastore(fullfile(imageFolder, categories), ...
+    'IncludeSubfolders', true, 'LabelSource', 'foldernames');  
+
+numImages = numel(imageDs.Files);
+
+% Initialize Feature Storage
+features = [];
+labels = [];
+augmentedImages = {};
+augmentedLabels = categorical();
+
+% Data Augmentation (Original + Rotations)
+for i = 1:numImages
+    img = readimage(imageDs, i);
+    img = imresize(img, [256, 256]);
+
+    % Add Original Image
+    augmentedImages{end+1} = img;
+    augmentedLabels(end+1,1) = imageDs.Labels(i);
+
+    % Add Rotated Images (30, 45, 60, 90, 180, 270, 360 degrees)
+    angles = [30, 45, 60, 90, 180, 270, 360];
+    for angle = angles
+        rotatedImg = imrotate(img, angle, 'bilinear', 'crop');
+        augmentedImages{end+1} = rotatedImg;
+        augmentedLabels(end+1,1) = imageDs.Labels(i);
+    end
+end
+
+% User-Defined Function for self features extraction
+
+function MHD_Red = extractMHDRed(hsvImg)
+    hueChannel = hsvImg(:,:,1);
+    pureRedHue = 0;
+    hueDistance = abs(hueChannel - pureRedHue);
+    hueDistance = min(hueDistance, 1 - hueDistance); % circular hue correction
+    MHD_Red = mean(hueDistance(:));
+end
+
+function CTF = extractCTF(R, G, B)
+    CTF = 0.299 * mean(R(:)) + 0.587 * mean(G(:)) + 0.114 * mean(B(:));
+end
+
+function CGM = extractCGM(rgbImg)
+    grayImg = rgb2gray(rgbImg);
+    [Gx, Gy] = imgradientxy(grayImg);
+    [Gmag, ~] = imgradient(Gx, Gy);
+    CGM = mean(Gmag(:));
+end
+
+% Extract Features from All Augmented Images
+numImages = numel(augmentedImages);
+
+for i = 1:numImages
+    img = augmentedImages{i};
+    img = imresize(img, [256, 256]);
+    grayImg = rgb2gray(img);
+
+    % Color Features (RGB, HSV, LAB)
+    R = double(img(:,:,1)); 
+    G = double(img(:,:,2)); 
+    B = double(img(:,:,3));
+
+    hsvImg = rgb2hsv(img);
+    H = mean(hsvImg(:,:,1), 'all'); 
+    S = mean(hsvImg(:,:,2), 'all'); 
+    V = mean(hsvImg(:,:,3), 'all');
+
+    ycbcrImg = rgb2ycbcr(img);
+    Y_mean = mean(ycbcrImg(:,:,1), 'all');
+    Cb_mean = mean(ycbcrImg(:,:,2), 'all');
+    Cr_mean = mean(ycbcrImg(:,:,3), 'all');
+    ycbcrFeatures = [Y_mean, Cb_mean, Cr_mean];
+
+    % Texture Features (GLCM)
+    glcm = graycomatrix(grayImg, 'Offset', [1 0; 0 1], 'Symmetric', true);
+    stats = graycoprops(glcm, {'Contrast', 'Correlation', 'Energy', 'Homogeneity'});
+    textureFeatures = [stats.Contrast, stats.Correlation, stats.Energy, stats.Homogeneity];
+
+    lbpFeatures = extractLBPFeatures(grayImg, 'Upright', false);
+
+    % Shape Features
+    bwImg = bwareafilt(imbinarize(grayImg), 1);
+    stats = regionprops(bwImg, 'Area', 'Perimeter', 'Eccentricity', 'Solidity', 'Extent');
+
+    if ~isempty(stats)
+        shapeFeatures = [stats.Area, stats.Perimeter, stats.Eccentricity, stats.Solidity, stats.Extent];
+    else
+        shapeFeatures = zeros(1, 5);
+    end
+
+    % user define Features using UDFs
+    MHD_Red = extractMHDRed(hsvImg);
+    CTF = extractCTF(R, G, B);
+    CGM = extractCGM(img);
+
+    ownSelfElectedFeatures = [MHD_Red, CTF, CGM];
+    % Combine All Features
+    % fullFeatures = [mean(R(:)), mean(G(:)), mean(B(:)), H, S, V, ycbcrFeatures, shapeFeatures, textureFeatures, lbpFeatures, ownSelfElectedFeatures];
+    fullFeatures = [mean(R(:)), mean(G(:)), mean(B(:)), H, S, V];
+    features = [features; fullFeatures];
+    labels = [labels; augmentedLabels(i)];
+end
+
+% Normalize Features
+features = normalize(features);
+
+% Train-Test Split
+c = cvpartition(labels, 'HoldOut', 0.2);
+trainIdx = training(c);
+testIdx = test(c);
+
+featuresTrain = features(trainIdx, :);
+labelsTrain = labels(trainIdx);
+featuresTest = features(testIdx, :);
+labelsTest = labels(testIdx);
+
+% Train SVM Classifier
+SVMModel = fitcecoc(featuresTrain, labelsTrain, 'Learners', templateSVM('KernelFunction', 'rbf'), 'Coding', 'onevsall');
+
+% Prediction
+predictions = predict(SVMModel, featuresTest);
+
+% Confusion Matrix and Metrics
+confMat = confusionmat(labelsTest, predictions);
+accuracy = sum(predictions == labelsTest) / numel(labelsTest);
+precision = diag(confMat) ./ sum(confMat, 1)';
+recall = diag(confMat) ./ sum(confMat, 2);
+f1score = 2 * (precision .* recall) ./ (precision + recall);
+
+% Display Metrics
+disp('Overall Performance:');
+disp(['Accuracy = ', num2str(accuracy)]);
+disp(['Precision = ', num2str(mean(precision, 'omitnan'))]);
+disp(['Recall = ', num2str(mean(recall, 'omitnan'))]);
+disp(['F1-Score = ', num2str(mean(f1score, 'omitnan'))]);
+
+% Plot Confusion Matrix
+figure;
+plotconfusion(labelsTest, predictions);
+title('Confusion Matrix for SVM Classification');
+
+% ----------- Permutation Feature Importance -----------
+
+baseAccuracy = accuracy;
+numFeatures = size(features, 2);
+featureImportance = zeros(1, numFeatures);
+
+for f = 1:numFeatures
+    featuresTestPermuted = featuresTest;
+    % Shuffle the f-th feature column
+    featuresTestPermuted(:, f) = featuresTestPermuted(randperm(size(featuresTestPermuted, 1)), f);
+    
+    % Predict with permuted feature
+    predictionsPermuted = predict(SVMModel, featuresTestPermuted);
+    
+    % Calculate accuracy drop after permutation
+    accPermuted = sum(predictionsPermuted == labelsTest) / numel(labelsTest);
+    featureImportance(f) = baseAccuracy - accPermuted;
+end
+
+% Normalize importance values (0 to 1 scale)
+featureImportance = featureImportance / max(featureImportance);
+
+% Feature names (optional, adjust if needed)
+featureNames = {'Mean_R', 'Mean_G', 'Mean_B', 'H', 'S', 'V', 'Y_mean', 'Cb_mean', 'Cr_mean', ...
+    'Area', 'Perimeter', 'Eccentricity', 'Solidity', 'Extent', ...
+    'Contrast', 'Correlation', 'Energy', 'Homogeneity'};
+
+% LBP features are usually 59 or 256 dims by default, so let's just name first 10 for example
+for k = 1:10
+    featureNames{end+1} = ['LBP_' num2str(k)];
+end
+
+% User defined features names
+featureNames{end+1} = 'MHD_Red';
+featureNames{end+1} = 'CTF';
+featureNames{end+1} = 'CGM';
+
+% If featureNames length less than total features, fill with generic names
+% if length(featureNames) < numFeatures
+%     for k = length(featureNames)+1:numFeatures
+%         featureNames{end+1} = ['Feature_' num2str(k)];
+%     end
+% end
+
+% Display Permutation Feature Importance
+fprintf('\nPermutation Feature Importance (normalized):\n');
+for i = 1:numFeatures
+    fprintf('%s: %.4f\n', featureNames{i}, featureImportance(i));
+end
+
+% Bar plot of feature importance
+figure;
+bar(featureImportance);
+set(gca, 'XTickLabel', featureNames, 'XTick', 1:numFeatures);
+xtickangle(45);
+xlabel('Feature');
+ylabel('Normalized Importance');
+title('Permutation Feature Importance for SVM Features');
+grid on;

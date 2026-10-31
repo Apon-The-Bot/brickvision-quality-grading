@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login - Brick Quality Inspection</title>
+  <link rel="stylesheet" href="/admin/static/admin.css" />
+</head>
+<body class="admin-login-body">
+  <main class="login-card">
+    <div class="brand-icon">🧱</div>
+    <h1>Admin Login</h1>
+    <p>Brick Specimen Dataset Upload & Model Training</p>
+
+    <form method="POST" action="/admin/login">
+      <label for="password">Admin Password</label>
+      <input id="password" name="password" type="password" placeholder="Enter password" required />
+      <button type="submit">Login</button>
+    </form>
+
+    <small>Default password: admin123. Change it using ADMIN_PASSWORD environment variable.</small>
+  </main>
+</body>
+</html>

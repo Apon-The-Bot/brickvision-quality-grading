@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - Brick Quality Inspection System</title>
+  <link rel="stylesheet" href="/admin/static/admin.css" />
+</head>
+<body>
+  <header class="admin-header">
+    <div>
+      <p class="eyebrow">Protected Admin Area</p>
+      <h1>Training Dashboard</h1>
+    </div>
+    <form method="POST" action="/admin/logout">
+      <button class="ghost-btn" type="submit">Logout</button>
+    </form>
+  </header>
+
+  <main class="admin-shell">
+    <section class="warning-box">
+      <strong>Important:</strong> Do not upload duplicate images in train, validation, and test. Duplicate images can cause data leakage and fake high accuracy.
+    </section>
+
+    <section class="dashboard-grid">
+      <div class="panel">
+        <h2>Bulk Upload Training Images</h2>
+        <form id="uploadForm">
+          <label for="split">Dataset Split</label>
+          <select id="split" name="split">
+            <option value="train" selected>train</option>
+            <option value="validation">validation</option>
+            <option value="test">test</option>
+          </select>
+
+          <div id="uploadRowsContainer" style="margin-top: 10px;">
+            <!-- Dynamic rows will be inserted here -->
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 15px; margin-bottom: 15px;">
+            <button type="button" id="addAnotherBtn" class="ghost-btn" style="width: 100%; border: 1px dashed #168246; color: #168246; background: #f3faf5; border-radius: 14px; padding: 12px; font-weight: 800; cursor: pointer;">+ Add Another Class</button>
+          </div>
+
+          <button type="submit" style="width: 100%;">Upload All Images</button>
+        </form>
+        <p id="uploadMessage" class="message"></p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title-row">
+          <h2>Active Model Stats (Trained Data)</h2>
+        </div>
+        <div id="modelStats" class="status-table-wrap">Loading...</div>
+      </div>
+    </section>
+
+    <section class="panel training-panel">
+      <div class="panel-title-row">
+        <div>
+          <h2>Model Training</h2>
+          <p>Runs <code>scripts/train_model.py</code> and saves model/evaluation files inside <code>models/</code>.</p>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button id="viewReportBtn" class="ghost-btn">View Report</button>
+          <button id="clearLogBtn" class="ghost-btn">Clear Log</button>
+          <button id="trainBtn">Start Training</button>
+        </div>
+      </div>
+      <div id="reportContainer" style="display: none; margin-bottom: 20px; padding: 18px; background: white; border: 1px solid #dbe7de; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
+        <h3 style="margin-top: 0; color: #168246;">Evaluation Report & Graphs</h3>
+        
+        <div class="report-type-selector" style="display: flex; gap: 10px; margin-bottom: 18px; background: #f3faf5; padding: 12px; border-radius: 14px; align-items: center; border: 1px solid #cce8d5;">
+          <span style="font-weight: bold; color: #168246; font-size: 14px;">Select Report View:</span>
+          <button id="btnFullReport" class="small-btn" style="margin: 0; padding: 6px 14px; font-size: 13px; font-weight: bold;">Full Model Report</button>
+        </div>
+
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+          <div style="flex: 1.2; min-width: 300px;">
+            <div id="reportText" style="background: #ffffff; margin: 0;"></div>
+          </div>
+          <div style="flex: 1.8; min-width: 350px; display: flex; align-items: center; justify-content: center;">
+            <img id="reportGraph" src="/admin/training-history" alt="Training History Graph" style="max-width: 100%; height: auto; border-radius: 12px; border: 1px solid #e4eee7; display: block;" />
+          </div>
+        </div>
+      </div>
+      <div id="trainingStatusHeader" style="margin-bottom: 12px; font-weight: bold; font-size: 14px; color: #168246; display: flex; align-items: center; gap: 8px;">
+        <span class="status-indicator-dot" style="width: 10px; height: 10px; border-radius: 50%; background: #168246; display: inline-block;"></span>
+        <span id="trainingStatusText">Status: Idle (Last log shown below)</span>
+      </div>
+      
+      <div id="trainingProgressWrapper" style="display: block; margin-bottom: 18px; padding: 15px; background: #f3faf5; border: 1px solid #cce8d5; border-radius: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span id="progressLabel" style="font-weight: bold; color: #168246; font-size: 14px;">Completed: Epoch 15/15</span>
+          <span id="progressPercent" style="font-weight: bold; color: #168246; font-size: 14px;">100%</span>
+        </div>
+        <div style="width: 100%; height: 10px; background: #e4eee7; border-radius: 5px; overflow: hidden;">
+          <div id="progressBar" style="width: 100%; height: 100%; background: #168246; transition: width 0.3s ease;"></div>
+        </div>
+        <p id="progressDetails" style="margin: 6px 0 0; font-size: 12px; color: #4e7a5c;">The process completed successfully.</p>
+      </div>
+
+      <pre id="trainLog" class="train-log" style="background: #0d140e; color: #c6f1d6; padding: 18px; border-radius: 16px; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; max-height: 480px; overflow-y: auto;">Loading training log...</pre>
+    </section>
+
+    <footer class="panel" style="margin-top: 22px; border: 1px solid #dbe7de;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 style="margin: 0; color: #1b2c20; font-size: 15px;">Civil Engineering Material Testing & Quality AI</h3>
+          <p style="margin: 4px 0 0; font-size: 12px; color: #66746a;">Brick Specimen Haralick GLCM Texture & Multi-Class SVM Architecture</p>
+        </div>
+        <div style="font-size: 12px; font-weight: bold; color: #168246;">
+          Developed by Amanullah Sheikh Apon
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <script src="/admin/static/admin.js"></script>
+</body>
+</html>

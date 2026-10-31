@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>BrickVision AI — Industrial Brick Material Inspection</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Lora:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    
+    <!-- Tailwind CSS (via CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              labBg: '#FAF7F2',       // Warm sand/cream background
+              labText: '#1C1B19',     // Deep warm charcoal text
+              labMuted: '#6B6862',    // Warm gray muted text
+              labBorder: '#E5DFD5',   // Light sepia border
+              labBorderDark: '#C7BDB0', // Darker sepia border
+              labGrid: '#F2ECE0',     // Grid line color
+              labPanel: '#FAFDFB',    // Soft paper panel background
+              brickRed: '#A3432B',    // Accent brick red
+              brickRedLight: '#F5EBE8', // Very light brick red
+              brickGreen: '#2B6A55',  // Match color
+              brickGreenLight: '#E8F5F1',
+            },
+            fontFamily: {
+              serif: ['Lora', 'serif'],
+              sans: ['Plus Jakarta Sans', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+    
+    <style>
+        body {
+            background-color: #FAF7F2;
+            color: #1C1B19;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-image: linear-gradient(to right, #F2ECE0 1px, transparent 1px),
+                              linear-gradient(to bottom, #F2ECE0 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        
+        .corner-marker-tl { border-top: 1px solid #C7BDB0; border-left: 1px solid #C7BDB0; }
+        .corner-marker-tr { border-top: 1px solid #C7BDB0; border-right: 1px solid #C7BDB0; }
+        .corner-marker-bl { border-bottom: 1px solid #C7BDB0; border-left: 1px solid #C7BDB0; }
+        .corner-marker-br { border-bottom: 1px solid #C7BDB0; border-right: 1px solid #C7BDB0; }
+        
+        .custom-scroll::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #FAF7F2;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #C7BDB0;
+            border-radius: 3px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #A3432B;
+        }
+
+        .scanning-line {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #A3432B, transparent);
+            animation: scan 2.5s infinite linear;
+        }
+        
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-brickRed selection:text-white pb-12">
+    
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-labBorder bg-labBg/90 backdrop-blur-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="grid grid-cols-2 gap-[2px] w-6 h-6">
+                    <div class="bg-brickRed rounded-sm"></div>
+                    <div class="bg-labMuted rounded-sm"></div>
+                    <div class="bg-labBorderDark rounded-sm"></div>
+                    <div class="bg-brickRed opacity-60 rounded-sm"></div>
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-serif font-bold text-lg tracking-tight leading-none text-brickRed">BrickVision AI</span>
+                    <span class="text-[9px] uppercase tracking-wider text-labMuted font-mono">Industrial Material Inspection</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden sm:block">
+                    <span class="text-[9px] uppercase font-mono text-labMuted block">Station</span>
+                    <span class="text-xs font-semibold text-labText">LAB-SVM-04</span>
+                </div>
+                <div class="w-8 h-8 rounded-full border border-labBorderDark flex items-center justify-center bg-labBorder/30 text-xs font-mono font-bold text-labText">
+                    AI
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="max-w-7xl w-full mx-auto px-6 mt-8 flex-grow">
+        
+        <!-- Heading -->
+        <div class="mb-8">
+            <h1 class="text-3xl md:text-4xl font-serif font-semibold text-labText">Brick Quality Grading System</h1>
+            <p class="text-sm text-labMuted max-w-3xl mt-2 leading-relaxed">
+                Industrial material inspection platform powered by Support Vector Machines (SVM). Instantly inspect clay brick specimens and verify their classification index.
+            </p>
+        </div>
+
+        <!-- Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Panel: File upload & preview (7 Columns) -->
+            <div class="lg:col-span-7 flex flex-col gap-6">
+                <div class="border border-labBorder bg-labPanel rounded-xl p-5 relative overflow-hidden shadow-sm">
+                    <div class="flex justify-between items-center border-b border-labBorder pb-4 mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs uppercase font-mono tracking-wider text-labMuted">Specimen Source</span>
+                            <span class="text-xs font-semibold text-labText border border-labBorder px-1.5 py-0.5 rounded bg-labBg">SPX-04829</span>
+                        </div>
+                        
+                        <!-- Status indicator -->
+                        <div id="status-indicator" class="flex items-center gap-1.5 text-xs text-labMuted font-mono">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" id="status-dot"></span>
+                            <span id="status-text">Awaiting Specimen</span>
+                        </div>
+                    </div>
+
+                    <!-- Drag & Drop Area -->
+                    <div id="scanner-frame" class="border border-dashed border-labBorderDark rounded-lg relative aspect-[4/3] bg-labBg flex flex-col items-center justify-center p-8 text-center transition-all duration-300">
+                        
+                        <!-- Corner Crosshairs -->
+                        <div class="absolute w-4 h-4 corner-marker-tl top-2 left-2"></div>
+                        <div class="absolute w-4 h-4 corner-marker-tr top-2 right-2"></div>
+                        <div class="absolute w-4 h-4 corner-marker-bl bottom-2 left-2"></div>
+                        <div class="absolute w-4 h-4 corner-marker-br bottom-2 right-2"></div>
+
+                        <!-- State 1: Upload Prompt -->
+                        <div id="upload-state" class="flex flex-col items-center max-w-md cursor-pointer w-full h-full justify-center" onclick="triggerFileSelect()">
+                            <span class="material-symbols-outlined text-4xl text-labMuted mb-3 font-light">add_photo_alternate</span>
+                            <h3 class="font-serif text-lg font-medium text-labText mb-2">Load Brick Specimen</h3>
+                            <p class="text-xs text-labMuted leading-relaxed mb-6">
+                                Click or drag & drop an image here to extract visual color, texture, and shape descriptors.
+                            </p>
+                            
+                            <label class="bg-labText hover:bg-brickRed text-white text-xs font-medium uppercase tracking-wider px-5 py-3 rounded cursor-pointer transition-all duration-200 inline-flex items-center gap-2" onclick="event.stopPropagation()">
+                                <span>Select Image</span>
+                                <span class="material-symbols-outlined text-sm">arrow_right_alt</span>
+                                <input type="file" id="file-input" accept="image/*" class="hidden" />
+                            </label>
+                        </div>
+
+                        <!-- State 2: Preview -->
+                        <div id="preview-state" class="hidden w-full h-full flex items-center justify-center p-2 relative">
+                            <!-- Scanning line anim -->
+                            <div id="scan-line" class="absolute w-full left-0 z-10 scanning-line hidden"></div>
+                            
+                            <img id="preview-image" src="" alt="Specimen Preview" class="max-w-full max-h-full object-contain rounded border border-labBorder shadow-sm" />
+                            
+                            <button onclick="clearSpecimen(event)" class="absolute top-4 right-4 bg-black/60 hover:bg-brickRed text-white p-2 rounded-full transition-colors z-20" title="Remove Specimen">
+                                <span class="material-symbols-outlined text-sm block">close</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Results Details (5 Columns) -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                <div id="results-panel-card" class="border border-labBorder bg-labPanel rounded-xl p-5 shadow-sm min-h-[360px] flex flex-col justify-between transition-colors duration-300">
+                    <div>
+                        <div class="flex items-center gap-2 border-b border-labBorder pb-4 mb-4">
+                            <span class="material-symbols-outlined text-brickRed">assignment_turned_in</span>
+                            <h2 class="font-serif text-lg font-medium text-labText">Inspection Panel</h2>
+                        </div>
+
+                        <!-- State A: Awaiting File -->
+                        <div id="awaiting-results" class="flex flex-col items-center justify-center text-center text-labMuted py-16 gap-2">
+                            <span class="material-symbols-outlined text-4xl font-light">assessment</span>
+                            <p class="text-xs">Upload an image on the left and click <b>"Run Material Inspection"</b> to initialize classification.</p>
+                        </div>
+
+                        <!-- State B: Loading / Analyzing -->
+                        <div id="loading-state" class="hidden flex flex-col items-center justify-center text-center py-16">
+                            <div class="w-10 h-10 rounded-full border-4 border-gray-200 border-t-brickRed animate-spin mb-3"></div>
+                            <h3 class="font-serif text-base font-medium text-labText mb-1">Running classification</h3>
+                            <p class="text-xs text-labMuted font-mono uppercase tracking-widest animate-pulse">Running SVM Inference...</p>
+                        </div>
+
+                        <!-- State C: Results Details -->
+                        <div id="results-segment" class="hidden flex flex-col gap-4">
+                            
+                            <!-- Highlighted Verification Banner -->
+                            <div id="verification-banner" class="hidden"></div>
+                            
+                            <div>
+                                <span class="text-labMuted block uppercase text-[10px] font-mono mb-0.5">Predicted Grade</span>
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-2xl font-serif font-bold text-brickRed" id="result-grade-title">G1</h3>
+                                    <span class="text-lg font-mono font-bold text-labText" id="result-confidence-val">94.8%</span>
+                                </div>
+                                <p class="text-xs text-labMuted mt-1.5 leading-relaxed bg-labBg p-3 rounded border border-labBorder" id="result-grade-desc"></p>
+                            </div>
+
+                            <!-- Progress indicator bar -->
+                            <div class="flex flex-col gap-1">
+                                <div class="h-3 w-full bg-labBg border border-labBorder rounded-full overflow-hidden">
+                                    <div id="result-confidence-bar" class="h-full bg-brickGreen transition-all duration-700" style="width: 0%;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Full matching distribution -->
+                            <div class="border-t border-labBorder pt-4">
+                                <span class="text-[10px] uppercase font-mono text-labMuted tracking-wider block mb-2">Grade Matching Distribution</span>
+                                <div class="flex flex-col gap-3 font-mono text-[11px]" id="probability-chart-container">
+                                    <!-- Rendered dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="border-t border-labBorder pt-4 mt-4 flex flex-col gap-3">
+                        <button id="inspect-btn" onclick="runInspection()" disabled class="w-full bg-labText disabled:bg-labMuted/20 disabled:text-labMuted/60 disabled:cursor-not-allowed hover:bg-brickRed text-white text-xs font-semibold uppercase tracking-widest py-4 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-lg">science</span>
+                            <span>Run Material Inspection</span>
+                        </button>
+                        
+                        <button id="reset-btn" onclick="resetApp()" class="hidden w-full border border-labBorderDark hover:border-brickRed bg-white text-labText hover:text-brickRed text-xs font-semibold uppercase tracking-wider py-3.5 rounded transition-all duration-200 flex items-center justify-center gap-1.5">
+                            <span class="material-symbols-outlined text-sm">restart_alt</span>
+                            <span>Clear Specimen</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM ACCORDION: Computed Features Explorer (Collapsible) -->
+        <div id="feature-explorer-card" class="mt-8 border border-labBorder bg-labPanel rounded-xl p-5 shadow-sm hidden">
+            <!-- Accordion Toggle Button -->
+            <button onclick="toggleFeaturesAccordion()" class="w-full flex items-center justify-between text-left group">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-brickRed text-xl">dataset</span>
+                    <h3 class="text-xs font-serif font-bold text-labText uppercase tracking-wider">Laboratory Inspection Metrics (35 Features)</h3>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-[10px] font-mono bg-labBg px-2 py-0.5 rounded text-labMuted group-hover:text-brickRed transition-colors">SVM normalized input</span>
+                    <span id="accordion-arrow" class="material-symbols-outlined text-labMuted group-hover:text-brickRed transition-transform duration-200">expand_more</span>
+                </div>
+            </button>
+
+            <!-- Expanded Panel Contents -->
+            <div id="accordion-content" class="hidden mt-4 pt-4 border-t border-labBorder">
+                <!-- Category Tabs -->
+                <div class="flex flex-wrap gap-1.5 pb-3 border-b border-labBorder mb-4">
+                    <button onclick="switchFeatureTab('color')" id="tab-btn-color" class="px-2.5 py-1.5 rounded text-[11px] font-semibold bg-brickRed text-white transition-all">Color (9)</button>
+                    <button onclick="switchFeatureTab('shape')" id="tab-btn-shape" class="px-2.5 py-1.5 rounded text-[11px] font-semibold bg-labBg text-labMuted hover:bg-labBorder hover:text-labText transition-all">Shape (5)</button>
+                    <button onclick="switchFeatureTab('texture')" id="tab-btn-texture" class="px-2.5 py-1.5 rounded text-[11px] font-semibold bg-labBg text-labMuted hover:bg-labBorder hover:text-labText transition-all">Texture (8)</button>
+                    <button onclick="switchFeatureTab('lbp')" id="tab-btn-lbp" class="px-2.5 py-1.5 rounded text-[11px] font-semibold bg-labBg text-labMuted hover:bg-labBorder hover:text-labText transition-all">LBP (10)</button>
+                    <button onclick="switchFeatureTab('custom')" id="tab-btn-custom" class="px-2.5 py-1.5 rounded text-[11px] font-semibold bg-labBg text-labMuted hover:bg-labBorder hover:text-labText transition-all">Custom (3)</button>
+                </div>
+
+                <div class="max-h-64 overflow-y-auto custom-scroll border border-labBorder rounded-lg bg-labBg/30">
+                    <table class="w-full text-left border-collapse text-xs font-mono">
+                        <thead class="bg-labBg text-labMuted uppercase tracking-wider border-b border-labBorder text-[10px]">
+                            <tr>
+                                <th class="p-3 pl-4">Feature Descriptor</th>
+                                <th class="p-3 pr-4 text-right">Extracted Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="features-tbody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-labBorder mt-16 pt-6 text-[10px] font-mono text-labMuted uppercase">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between gap-4">
+            <div>BrickVision AI | SVM Materials Inspection Platform</div>
+            <div>ASTM C67 - EN 771-1 | Station LAB-SVM-04 | © 2026</div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Global variables
+        let selectedFile = null;
+        let analysisResults = null;
+        let currentFeatureTab = 'color';
+        let isAccordionExpanded = false;
+        
+        // Setup event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('file-input');
+            const scannerFrame = document.getElementById('scanner-frame');
+            
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Drag and drop events
+            ['dragenter', 'dragover'].forEach(eventName => {
+                scannerFrame.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    scannerFrame.classList.add('border-brickRed', 'bg-labBorder/20');
+                }, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                scannerFrame.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    scannerFrame.classList.remove('border-brickRed', 'bg-labBorder/20');
+                }, false);
+            });
+            
+            scannerFrame.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    handleFileSelect({ target: fileInput });
+                }
+            });
+        });
+
+        // Trigger file input click
+        function triggerFileSelect() {
+            document.getElementById('file-input').click();
+        }
+
+        // Handles file input selection
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (files.length === 0) return;
+            
+            selectedFile = files[0];
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('preview-image').src = event.target.result;
+                document.getElementById('upload-state').classList.add('hidden');
+                document.getElementById('preview-state').classList.remove('hidden');
+                
+                updateStatus('specimen_loaded', 'Specimen Loaded');
+                document.getElementById('inspect-btn').disabled = false;
+            };
+            reader.readAsDataURL(selectedFile);
+        }
+
+        // Resets the state of the app
+        function clearSpecimen(e) {
+            if (e) e.stopPropagation();
+            
+            selectedFile = null;
+            analysisResults = null;
+            document.getElementById('file-input').value = '';
+            document.getElementById('preview-image').src = '';
+            document.getElementById('preview-state').classList.add('hidden');
+            document.getElementById('upload-state').classList.remove('hidden');
+            document.getElementById('scan-line').classList.add('hidden');
+            
+            updateStatus('awaiting', 'Awaiting specimen');
+            
+            // Clear verification banners & panel styles
+            const banner = document.getElementById('verification-banner');
+            banner.classList.add('hidden');
+            banner.innerHTML = '';
+            
+            const panelCard = document.getElementById('results-panel-card');
+            panelCard.className = "border border-labBorder bg-labPanel rounded-xl p-5 shadow-sm min-h-[360px] flex flex-col justify-between transition-colors duration-300";
+            
+            document.getElementById('inspect-btn').disabled = true;
+            document.getElementById('results-segment').classList.add('hidden');
+            document.getElementById('feature-explorer-card').classList.add('hidden');
+            document.getElementById('reset-btn').classList.add('hidden');
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('awaiting-results').classList.remove('hidden');
+        }
+
+        // Updates status indicators
+        function updateStatus(state, text) {
+            const dot = document.getElementById('status-dot');
+            const label = document.getElementById('status-text');
+            
+            label.textContent = text;
+            dot.className = "w-2.5 h-2.5 rounded-full";
+            
+            if (state === 'awaiting') {
+                dot.classList.add('bg-amber-500', 'animate-pulse');
+            } else if (state === 'specimen_loaded') {
+                dot.classList.add('bg-blue-500');
+            } else if (state === 'analyzing') {
+                dot.classList.add('bg-brickRed', 'animate-pulse');
+            } else if (state === 'completed') {
+                dot.classList.add('bg-brickGreen');
+            } else if (state === 'completed_invalid') {
+                dot.classList.add('bg-red-500');
+            }
+        }
+
+        // Toggle collapsible accordion
+        function toggleFeaturesAccordion() {
+            const content = document.getElementById('accordion-content');
+            const arrow = document.getElementById('accordion-arrow');
+            isAccordionExpanded = !isAccordionExpanded;
+            
+            if (isAccordionExpanded) {
+                content.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                content.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Submits image to FastAPI
+        async function runInspection() {
+            if (!selectedFile) return;
+            
+            document.getElementById('awaiting-results').classList.add('hidden');
+            document.getElementById('results-segment').classList.add('hidden');
+            document.getElementById('reset-btn').classList.add('hidden');
+            document.getElementById('loading-state').classList.remove('hidden');
+            document.getElementById('inspect-btn').disabled = true;
+            document.getElementById('scan-line').classList.remove('hidden');
+            
+            updateStatus('analyzing', 'Extracting Features...');
+            
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+            
+            try {
+                const response = await fetch("/analyze", {
+                    method: "POST",
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                
+                analysisResults = await response.json();
+                displayResults(analysisResults);
+                
+            } catch (err) {
+                console.error("Analysis failed:", err);
+                alert("Inspection server error. Please make sure the app.py backend is running.");
+                clearSpecimen();
+            } finally {
+                document.getElementById('scan-line').classList.add('hidden');
+            }
+        }
+
+        // Render results
+        function displayResults(data) {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('inspect-btn').disabled = false;
+            
+            const gradeTitle = document.getElementById('result-grade-title');
+            const gradeDesc = document.getElementById('result-grade-desc');
+            const confidenceVal = document.getElementById('result-confidence-val');
+            const confidenceBar = document.getElementById('result-confidence-bar');
+            const banner = document.getElementById('verification-banner');
+            const panelCard = document.getElementById('results-panel-card');
+            
+            gradeTitle.textContent = `Grade ${data.predicted_class}`;
+            
+            const confPct = (data.confidence * 100).toFixed(1);
+            confidenceVal.textContent = `${confPct}%`;
+            confidenceBar.style.width = `${confPct}%`;
+            
+            const isVerified = data.confidence >= 0.80;
+            
+            if (isVerified) {
+                // Set green theme
+                panelCard.className = "border border-brickGreen/40 bg-labPanel rounded-xl p-5 shadow-sm min-h-[360px] flex flex-col justify-between transition-colors duration-300";
+                confidenceBar.className = "h-full bg-brickGreen transition-all duration-700";
+                gradeTitle.className = "text-2xl font-serif font-bold text-brickGreen";
+                
+                banner.innerHTML = `
+                    <div class="flex items-center gap-2.5 p-3 bg-brickGreenLight border border-brickGreen/30 text-brickGreen rounded-lg shadow-sm">
+                        <span class="material-symbols-outlined text-lg">check_circle</span>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-extrabold uppercase tracking-wide leading-tight">Specimen Verified</span>
+                            <span class="text-[9px] opacity-90 font-medium font-mono leading-none mt-0.5">Confidence matches standard (>=80.0%)</span>
+                        </div>
+                    </div>
+                `;
+                banner.classList.remove('hidden');
+                
+                gradeDesc.innerHTML = `${data.description}`;
+                updateStatus('completed', `Verified ${data.predicted_class}`);
+            } else {
+                // Set red theme (Invalid warning)
+                panelCard.className = "border-2 border-brickRed/80 bg-brickRedLight/15 rounded-xl p-5 shadow-md min-h-[360px] flex flex-col justify-between transition-colors duration-300";
+                confidenceBar.className = "h-full bg-brickRed transition-all duration-700";
+                gradeTitle.className = "text-2xl font-serif font-bold text-brickRed";
+                
+                banner.innerHTML = `
+                    <div class="flex items-center gap-2.5 p-3 bg-brickRedLight border border-brickRed/40 text-brickRed rounded-lg shadow-sm">
+                        <span class="material-symbols-outlined text-xl animate-pulse">warning</span>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-extrabold uppercase tracking-wide leading-tight">Verification Failed (Invalid)</span>
+                            <span class="text-[9px] opacity-90 font-medium font-mono leading-none mt-0.5">Confidence is below required standard (<80.0%)</span>
+                        </div>
+                    </div>
+                `;
+                banner.classList.remove('hidden');
+                
+                gradeDesc.innerHTML = `${data.description}`;
+                updateStatus('completed_invalid', `Unverified Match`);
+            }
+            
+            // Render probabilities
+            const probsContainer = document.getElementById('probability-chart-container');
+            probsContainer.innerHTML = '';
+            
+            for (const [cls, prob] of Object.entries(data.probabilities)) {
+                const probPct = (prob * 100).toFixed(1);
+                
+                const row = document.createElement('div');
+                row.className = "flex flex-col gap-1.5";
+                
+                const labelsRow = document.createElement('div');
+                labelsRow.className = "flex justify-between items-center";
+                
+                const clsLabel = document.createElement('span');
+                clsLabel.className = cls === data.predicted_class ? (isVerified ? "font-bold text-brickGreen" : "font-bold text-brickRed") : "text-labMuted";
+                clsLabel.textContent = `Grade ${cls}`;
+                
+                const valLabel = document.createElement('span');
+                valLabel.className = cls === data.predicted_class ? "font-bold text-labText" : "text-labMuted";
+                valLabel.textContent = `${probPct}%`;
+                
+                labelsRow.appendChild(clsLabel);
+                labelsRow.appendChild(valLabel);
+                
+                const barOutline = document.createElement('div');
+                barOutline.className = "h-2 w-full bg-labBg border border-labBorder rounded-full overflow-hidden";
+                
+                const barFill = document.createElement('div');
+                barFill.className = cls === data.predicted_class ? (isVerified ? "h-full bg-brickGreen" : "h-full bg-brickRed") : "h-full bg-labMuted/30";
+                barFill.style.width = `${probPct}%`;
+                
+                barOutline.appendChild(barFill);
+                row.appendChild(labelsRow);
+                row.appendChild(barOutline);
+                
+                probsContainer.appendChild(row);
+            }
+            
+            document.getElementById('results-segment').classList.remove('hidden');
+            document.getElementById('feature-explorer-card').classList.remove('hidden');
+            document.getElementById('reset-btn').classList.remove('hidden');
+            
+            populateFeaturesTable(data.features);
+        }
+
+        // Switch category tabs
+        function switchFeatureTab(tab) {
+            currentFeatureTab = tab;
+            
+            const tabs = ['color', 'shape', 'texture', 'lbp', 'custom'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (t === tab) {
+                    btn.className = "px-2.5 py-1.5 rounded text-[11px] font-semibold bg-brickRed text-white transition-all";
+                } else {
+                    btn.className = "px-2.5 py-1.5 rounded text-[11px] font-semibold bg-labBg text-labMuted hover:bg-labBorder hover:text-labText transition-all";
+                }
+            });
+            
+            if (analysisResults && analysisResults.features) {
+                populateFeaturesTable(analysisResults.features);
+            }
+        }
+
+        // Populate table entries
+        function populateFeaturesTable(features) {
+            const tbody = document.getElementById('features-tbody');
+            tbody.innerHTML = '';
+            
+            const groups = {
+                color: ['Mean_R', 'Mean_G', 'Mean_B', 'Mean_H', 'Mean_S', 'Mean_V', 'Mean_Y', 'Mean_Cb', 'Mean_Cr'],
+                shape: ['Area', 'Perimeter', 'Eccentricity', 'Solidity', 'Extent'],
+                texture: ['Contrast_H', 'Contrast_V', 'Correlation_H', 'Correlation_V', 'Energy_H', 'Energy_V', 'Homogeneity_H', 'Homogeneity_V'],
+                lbp: ['LBP_1', 'LBP_2', 'LBP_3', 'LBP_4', 'LBP_5', 'LBP_6', 'LBP_7', 'LBP_8', 'LBP_9', 'LBP_10'],
+                custom: ['MHD_Red', 'CTF', 'CGM']
+            };
+            
+            const activeList = groups[currentFeatureTab] || [];
+            
+            activeList.forEach(featName => {
+                const val = features[featName];
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-labBorder/50 hover:bg-labBorder/20 transition-colors";
+                
+                const tdName = document.createElement('td');
+                tdName.className = "p-3 pl-4 font-medium text-labText";
+                tdName.textContent = featName;
+                
+                const tdVal = document.createElement('td');
+                tdVal.className = "p-3 pr-4 text-right text-labMuted font-mono";
+                tdVal.textContent = typeof val === 'number' ? val.toLocaleString(undefined, {minimumFractionDigits: 4, maximumFractionDigits: 4}) : val;
+                
+                tr.appendChild(tdName);
+                tr.appendChild(tdVal);
+                tbody.appendChild(tr);
+            });
+        }
+
+        function resetApp() {
+            clearSpecimen();
+        }
+    </script>
+</body>
+</html>

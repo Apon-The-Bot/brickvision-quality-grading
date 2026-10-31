@@ -1,0 +1,30 @@
+{
+  "G1 - First Class Brick": {
+    "train": 1850,
+    "validation": 240,
+    "test": 310,
+    "total": 2400
+  },
+  "G2 - Second Class Brick": {
+    "train": 1720,
+    "validation": 220,
+    "test": 280,
+    "total": 2220
+  },
+  "G3 - Third Class Brick": {
+    "train": 1480,
+    "validation": 190,
+    "test": 230,
+    "total": 1900
+  },
+  "G4 - Jhama / Rejected": {
+    "train": 1350,
+    "validation": 170,
+    "test": 210,
+    "total": 1730
+  },
+  "metrics": {
+    "train_loss": 0.0412154,
+    "train_accuracy": 0.984625
+  }
+}

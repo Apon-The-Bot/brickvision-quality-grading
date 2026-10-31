@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ইটের মান ও গ্রেড পরীক্ষা — Brick Quality Inspection</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/user/style.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="প্রথম পাতায় যান">
+        <span class="brand-icon" aria-hidden="true" style="font-size: 28px;">🧱</span>
+        <span>
+          <strong>ইটের মান ও গ্রেড পরীক্ষা</strong>
+          <small>কম্পিউটার ভিশন ও এআই ভিত্তিক নির্মাণ সামগ্রী মূল্যায়ন</small>
+        </span>
+      </a>
+      <p class="header-note">১ম শ্রেণি (G1) · ২য় শ্রেণি (G2) · ৩য় শ্রেণি (G3) · ঝামা (G4)</p>
+    </header>
+
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="hero-text">
+        <span class="kicker">সিভিল ইঞ্জিনিয়ারিং কোয়ালিটি কন্ট্রোল</span>
+        <h1 id="heroTitle">ইটের ছবি দিন, সম্ভাব্য গ্রেড ও করণীয় দেখুন</h1>
+        <p>
+          ইটের রং, সমতলতা ও টেক্সচার বিশ্লেষণ করে সিস্টেম একটি সম্ভাব্য গ্রেড দেখায়।
+          ফলাফলটি কম্পিউটার ভিশন ও এসভিএম ভিত্তিক প্রাথমিক ধারণা দেওয়ার জন্য।
+        </p>
+      </div>
+
+      <div class="photo-tips" aria-label="ভালো ছবি তোলার নিয়ম">
+        <div class="tips-icon" aria-hidden="true" style="font-size: 24px;">🔍</div>
+        <h2>ভালো ফলাফলের জন্য</h2>
+        <ul>
+          <li>ইটটি যেন স্পষ্টভাবে ফ্রেমের মাঝে থাকে</li>
+          <li>পর্যাপ্ত দিনের আলোতে সোজা রেখে ছবি তুলুন</li>
+          <li>অতিরিক্ত ছায়া বা ঝাপসা ছবি এড়িয়ে চলুন</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="work-area" aria-label="ছবি পরীক্ষা অংশ">
+      <section class="panel upload-panel" aria-labelledby="uploadTitle">
+        <div class="panel-heading">
+          <span class="heading-icon" aria-hidden="true">📸</span>
+          <div>
+            <h2 id="uploadTitle">ইটের ছবি নির্বাচন করুন</h2>
+            <p>একটি পরিষ্কার ইটের সামনের বা পার্শ্ববর্তী পৃষ্ঠের ছবি দিন</p>
+          </div>
+        </div>
+
+        <label id="dropZone" class="drop-zone" for="imageInput">
+          <input type="file" id="imageInput" accept="image/*" hidden />
+          <span class="drop-icon" aria-hidden="true" style="font-size: 40px; display: block; margin-bottom: 8px;">🧱</span>
+          <strong>ছবি এখানে টেনে এনে ছাড়ুন</strong>
+          <span>অথবা এখানে চাপ দিয়ে ছবি নির্বাচন করুন</span>
+          <em>জেপিজি, জেপিইজি, পিএনজি অথবা ওয়েবপি ছবি নেওয়া যাবে</em>
+        </label>
+
+        <div id="previewWrap" class="preview hidden">
+          <div class="preview-top">
+            <span>নির্বাচিত ছবি</span>
+            <button id="clearBtn" type="button">অন্য ছবি দিন</button>
+          </div>
+          <img id="previewImage" alt="নির্বাচিত ইটের ছবি" />
+        </div>
+
+        <button id="predictBtn" class="main-button" disabled>
+          <span class="button-label">মান পরীক্ষা করুন</span>
+          <span class="button-spinner" aria-hidden="true"></span>
+        </button>
+
+        <p id="message" class="message"></p>
+      </section>
+
+      <section class="panel result-panel" aria-labelledby="resultTitle">
+        <div class="panel-heading">
+          <span class="heading-icon" aria-hidden="true">📊</span>
+          <div>
+            <h2 id="resultTitle">মূল্যায়ন ফলাফল</h2>
+            <p>পরীক্ষার ফলাফল ও প্রকৌশল সুপারিশ</p>
+          </div>
+        </div>
+
+        <div id="resultCard" class="result-placeholder">
+          <div class="placeholder-icon" aria-hidden="true" style="font-size: 40px;">🧪</div>
+          <h3>ফলাফল এখানে দেখা যাবে</h3>
+          <p>একটি ইটের ছবি নির্বাচন করে "মান পরীক্ষা করুন" চাপুন।</p>
+        </div>
+      </section>
+    </section>
+
+    <footer class="site-footer">
+      <p>
+        <strong>Brick Quality Inspection AI System</strong> — Developed by <b>Amanullah Sheikh Apon</b><br />
+        Support Vector Machine (SVM) · 35 GLCM Haralick & LBP Texture Descriptors · Mahalanobis Out-Of-Distribution Filter
+      </p>
+    </footer>
+  </main>
+
+  <script src="/user/script.js"></script>
+</body>
+</html>

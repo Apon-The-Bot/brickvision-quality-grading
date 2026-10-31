@@ -1,0 +1,11 @@
+*.zip
+*.tar.gz
+temp/
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+dataset/
+*.log
+last_processed.jpg
+Application/

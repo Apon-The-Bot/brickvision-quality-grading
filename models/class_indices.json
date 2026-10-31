@@ -1,0 +1,14 @@
+{
+  "class_names": [
+    "G1 - First Class Brick",
+    "G2 - Second Class Brick",
+    "G3 - Third Class Brick",
+    "G4 - Jhama / Rejected"
+  ],
+  "index_to_class": {
+    "0": "G1 - First Class Brick",
+    "1": "G2 - Second Class Brick",
+    "2": "G3 - Third Class Brick",
+    "3": "G4 - Jhama / Rejected"
+  }
+}

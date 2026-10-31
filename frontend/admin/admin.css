@@ -1,0 +1,207 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f4f7f2;
+  color: #1b2c20;
+}
+
+.admin-login-body {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #ecfff1, #e9f3ff);
+}
+
+.login-card {
+  width: min(420px, calc(100% - 32px));
+  padding: 34px;
+  border-radius: 28px;
+  background: white;
+  box-shadow: 0 28px 80px rgba(34, 79, 48, 0.16);
+}
+
+.brand-icon {
+  font-size: 46px;
+}
+
+.login-card h1,
+.admin-header h1,
+.panel h2 {
+  margin: 0;
+}
+
+.login-card p {
+  color: #637165;
+}
+
+form {
+  display: grid;
+  gap: 12px;
+}
+
+label {
+  font-weight: 800;
+  margin-top: 8px;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 14px;
+  border: 1px solid #cad8ce;
+  font: inherit;
+  background: white;
+}
+
+button {
+  border: 0;
+  border-radius: 14px;
+  padding: 13px 18px;
+  background: #168246;
+  color: white;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(0.95);
+}
+
+small {
+  display: block;
+  margin-top: 18px;
+  color: #7a877e;
+}
+
+.admin-header {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #168246;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ghost-btn,
+.small-btn {
+  background: white;
+  color: #168246;
+  border: 1px solid #b9d4c2;
+}
+
+.admin-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto 40px;
+}
+
+.warning-box,
+.panel {
+  background: white;
+  border: 1px solid #dbe7de;
+  border-radius: 24px;
+  box-shadow: 0 18px 50px rgba(42, 79, 52, 0.08);
+}
+
+.warning-box {
+  padding: 18px 20px;
+  color: #7a4e00;
+  background: #fff8e8;
+  border-color: #f0d69a;
+  margin-bottom: 22px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 22px;
+}
+
+.panel {
+  padding: 24px;
+}
+
+.panel-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.message {
+  min-height: 22px;
+  font-weight: 800;
+  color: #176d3d;
+}
+
+.status-table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+th,
+td {
+  border-bottom: 1px solid #e4eee7;
+  padding: 10px;
+  text-align: left;
+}
+
+th {
+  background: #f3faf5;
+}
+
+.training-panel {
+  margin-top: 22px;
+}
+
+.training-panel p {
+  margin: 8px 0 0;
+  color: #66746a;
+}
+
+.train-log {
+  min-height: 280px;
+  max-height: 520px;
+  overflow: auto;
+  padding: 18px;
+  border-radius: 18px;
+  background: #132017;
+  color: #d8f3de;
+  white-space: pre-wrap;
+}
+
+code {
+  background: #edf5ef;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+@media (max-width: 900px) {
+  .admin-header,
+  .dashboard-grid,
+  .panel-title-row {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
